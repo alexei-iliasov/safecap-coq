@@ -1,0 +1,37 @@
+/ *****************************************************************************
+/ *                    SSI DATA                                               *
+/ *****************************************************************************
+/ *                    Points Free to Move DataFile (PFM                      *
+/ *****************************************************************************
+/ *    SCHEME NAME                 *   Coq Junction
+/ *                                *
+/ *    INTERLOCKING NAME           *   COQ_JUNCTION
+/ *                                *
+/ *    FILE NAME                   *   COQ.PFM
+/ *                                *
+/ *    VERSION                     *   1
+/ *                                *
+/ *    LAST CHECKED IN             *   Date: 14/09/23
+/ *                                *
+/ *    LAST CHANGED BY             *   Alexei Iliasov
+/ *                                *
+
+
+
+*P100N      TAC c
+            UAC-AC f UAC-CA f
+            \
+
+*P100R      TAC c
+            UAC-AD f UAC-DA f
+            UAC-CB f UAC-BC f
+            \
+
+*P110N      TAD c
+            UAC-BD f UAC-DB f
+            \
+
+*P110R      TAD c
+            UAD-AD f UAD-DA f
+            UAD-CB f UAD-BC f
+            \

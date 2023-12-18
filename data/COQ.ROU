@@ -1,0 +1,22 @@
+/ *****************************************************************************
+/ *                    SSI DATA                                               *
+/ *****************************************************************************
+/ *                    Routes Identities File (ROU)                           *
+/ *****************************************************************************
+/ *    SCHEME NAME                 *   Coq Junction
+/ *                                *
+/ *    INTERLOCKING NAME           *   COQ_JUNCTION
+/ *                                *
+/ *    FILE NAME                   *   COQ.ROU
+/ *                                *
+/ *    VERSION                     *   1
+/ *                                *
+/ *    LAST CHECKED IN             *   Date: 14/09/23
+/ *                                *
+/ *    LAST CHANGED BY             *   Alexei Iliasov
+/ *               
+
+
+	R100(M)		R102A(M)	R102B(M)	R106(M)
+	R108A(M)	R108B(M)	R101-1(M)	R101-2(M)
+	R103(M)

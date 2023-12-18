@@ -1,0 +1,36 @@
+/ *****************************************************************************
+/ *                    SSI DATA                                               *
+/ *****************************************************************************
+/ *                    Flag Operations Data File (FOP                         *
+/ *****************************************************************************
+/ *    SCHEME NAME                 *   Coq Junction
+/ *                                *
+/ *    INTERLOCKING NAME           *   COQ_JUNCTION
+/ *                                *
+/ *    FILE NAME                   *   COQ.FOP
+/ *                                *
+/ *    VERSION                     *   1
+/ *                                *
+/ *    LAST CHECKED IN             *   Date: 14/09/23
+/ *                                *
+/ *    LAST CHANGED BY             *   Alexei Iliasov
+/ *                                *
+
+
+UAA-AB f
+        if R103(M) xs
+            TAA c
+        \ .
+
+UAB-AB f
+        if UAC-BC f UAC-AC f
+           TAB c
+        \ .
+
+UAB-BA f
+        if R100(M) xs
+            TAA c
+        \ .
+
+
+/ to continue with other sub routes

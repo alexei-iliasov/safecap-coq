@@ -1,0 +1,46 @@
+/ *****************************************************************************
+/ *                    SSI DATA                                               *
+/ *****************************************************************************
+/ *                    Panel Requests Data File (PRR)                         *
+/ *****************************************************************************
+/ *    SCHEME NAME                 *   Coq Junction
+/ *                                *
+/ *    INTERLOCKING NAME           *   COQ_JUNCTION
+/ *                                *
+/ *    FILE NAME                   *   COQ.PFM
+/ *                                *
+/ *    VERSION                     *   1
+/ *                                *
+/ *    LAST CHECKED IN             *   Date: 14/09/23
+/ *                                *
+/ *    LAST CHANGED BY             *   Alexei Iliasov
+/ *
+
+
+
+*QR100(M)                      /to S102
+        if R100(M) a
+        then R100(M) s
+             UAB-BA l
+        \ 
+\
+
+*QR102A(M)                      /to S110
+        if R102A(M) a
+           P100 cfr             / P100 cr or (TAC c UAC-AD f UAC-DA f UAC-CB f UAC-BC f)
+                                / point_state(P100) == REVERSE or (TAC /: track_o and UAC-AD /: subroute_l ...)
+           P110 cfn
+        then R102A(M) s
+             UAC-CA l  UAD-DA l / subroute_l' = subroute_l \/ {UAC-CA, UAD-DA}
+             P100 cr  P110 cn   / point_state' = point_state <+ {P100 -> REVERSE, P110 -> NORMAL}
+        \
+\
+
+*QR102B(M)                      /to S104
+        if R102B(M) a
+           P100 cfn  P110 cfn
+        then R102B(M) s
+             UAC-CB l  UAD-CB l  UAF-BA l
+             P100 cn  P110 cn
+        \
+\

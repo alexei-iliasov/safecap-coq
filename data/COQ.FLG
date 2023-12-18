@@ -1,0 +1,32 @@
+/ *****************************************************************************
+/ *                    SSI DATA                                               *
+/ *****************************************************************************
+/ *                    Flags Identities File (FLG)                            *
+/ *****************************************************************************
+/ *    SCHEME NAME                 *   Coq Junction
+/ *                                *
+/ *    INTERLOCKING NAME           *   COQ_JUNCTION
+/ *                                *
+/ *    FILE NAME                   *   COQ.FLG
+/ *                                *
+/ *    VERSION                     *   1
+/ *                                *
+/ *    LAST CHECKED IN             *   Date: 14/09/23
+/ *                                *
+/ *    LAST CHANGED BY             *   Alexei Iliasov
+/ *                                *
+
+
+
+/SUB-ROUTES
+
+
+	UAA-AB		
+	UAB-AB		UAB-BA
+	UAC-AC		UAC-BC		UAC-CA		UAC-CB		UAC-DA
+	UAD-BC		UAD-BD		UAD-CB		UAD-DA		UAD-DB
+	UAF-BA
+	UBB-BA
+	
+	
+

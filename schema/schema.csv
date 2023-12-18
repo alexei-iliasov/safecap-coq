@@ -1,0 +1,47 @@
+comment, section id, list of segment ids
+section, TBA, 260256291
+section, TAA, 141601266
+section, TBB, 1360670846
+section, TAB, 282688356
+section, TBC, 600543179
+section, TAF, 2130422201
+section, TAC, 133321775, 298711368, 885437742, 977574204, 802730113, 807377568
+section, TAD, 660626311, 2129302349, 2143659352, 635569126, 30912386, 356324579
+comment, segment id, point role, crossover role, from node, to node, length
+segment, 260256291, Normal, none, LA, NI4, 12
+segment, 141601266, None, none, LB, NI5, 12
+segment, 133321775, None, none, P100B, NI, 12
+segment, 807377568, Normal, none, P100A, NI1, 12
+segment, 977574204, Reverse, none, P100A, NI8, 50
+segment, 660626311, Normal, none, P110B, NI6, 12
+segment, 30912386, None, none, P110A, NI7, 12
+segment, 2143659352, Reverse, none, P110B, NI9, 50
+segment, 2129302349, None, none, NI, P110B, 12
+segment, 356324579, Normal, none, NI1, P110A, 12
+segment, 298711368, Normal, none, NI2, P100B, 25
+segment, 802730113, None, none, NI3, P100A, 25
+segment, 1360670846, None, none, NI4, NI2, 12
+segment, 282688356, None, none, NI5, NI3, 12
+segment, 600543179, None, none, NI6, RA, 12
+segment, 2130422201, None, none, NI7, RB, 12
+segment, 885437742, Reverse, none, NI8, P100B, 50
+segment, 635569126, Reverse, none, NI9, P110A, 50
+comment, node id, node type, graphical x, graphical y
+node, LA, Boundary, 168, 252
+node, LB, Boundary, 168, 336
+node, RA, Boundary, 1017, 252
+node, RB, Boundary, 1017, 336
+node, P100B, Point, 601, 252
+node, P100A, Point, 517, 336
+node, P110B, Point, 794, 252
+node, P110A, Point, 893, 336
+node, NI, Normal, 705, 252
+node, NI1, Normal, 706, 336
+node, NI2, Normal, 474, 252
+node, NI3, Normal, 474, 336
+node, NI4, Normal, 343, 252
+node, NI5, Normal, 345, 336
+node, NI6, Normal, 930, 252
+node, NI7, Normal, 931, 336
+node, NI8, Silent, 561, 292
+node, NI9, Silent, 846, 296

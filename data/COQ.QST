@@ -1,0 +1,28 @@
+/ *****************************************************************************
+/ *                    SSI DATA                                               *
+/ *****************************************************************************
+/ *                    Panel Requests Identities File (QST)                   *
+/ *****************************************************************************
+/ *    SCHEME NAME                 *   Coq Junction
+/ *                                *
+/ *    INTERLOCKING NAME           *   COQ_JUNCTION
+/ *                                *
+/ *    FILE NAME                   *   COQ.QST
+/ *                                *
+/ *    VERSION                     *   1
+/ *                                *
+/ *    LAST CHECKED IN             *   Date: 14/09/23
+/ *                                *
+/ *    LAST CHANGED BY             *   Alexei Iliasov
+/ *               
+
+
+	QR100(M)	QR102A(M)	QR102B(M)	QR106(M)
+	QR108A(M)	QR108B(M)	QR101-1(M)	QR101-2(M)
+	QR103(M)
+
+
+
+
+
+
