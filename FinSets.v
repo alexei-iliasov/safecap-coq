@@ -57,6 +57,12 @@ Definition Same_set (A : FinSet) (B : FinSet) : Prop :=
 (* sets are equal (substitutable in proofs) if they are the same *)
 Axiom set_extensionality: forall (A : FinSet) B, Same_set A B <-> A = B. 
 
+(* Counterpositive  is true in constructive logic *)
+Lemma contrapos: forall (A:Prop) (B:Prop), (A -> B) -> ~ B -> ~ A.
+Proof. 
+  intros. unfold not. intros. apply H in H1. exfalso. unfold not in H0. apply H0. assumption.
+Qed.
+
 
 (* set membership as Coq proposition *)
 Definition In (x : U) A : Prop := mem x A = true. 
@@ -239,6 +245,12 @@ Proof.
   + assumption.
 Qed.
 
+(* The opposite by contrapositive *)
+Lemma In_inside_not: forall (x:U) x0 A, x <> x0 -> ~ In x A -> ~In x (Add x0 A).
+Proof. 
+  intros x x0 A H. apply contrapos. intros. apply (In_inside x x0 A); assumption.
+Qed.
+
 
 (* subset properties *)
 Lemma Add_subset: forall (x:U) A, Subset A (Add x A).
@@ -260,6 +272,29 @@ Lemma Subset_trans: forall (A : FinSet) B C, Subset A B -> Subset B C -> Subset 
 Proof. 
   intros. unfold Subset. intros. unfold Subset in H. unfold Subset in H0.
   apply H in H1. apply H0 in H1. assumption.
+Qed.
+
+(*Subset after adding*)
+Lemma Subset_Add: forall (x:U) A B, Subset (Add x A) B -> Subset A B. 
+Proof.
+  intros x A B. unfold Subset. intros. simpl in H. pose (H1 := H x0). rewrite orb_true_iff in H1.
+  apply H1. right. assumption.
+Qed.
+
+(* Subset and Union -- Union as max, Subset as an ordering*)
+Lemma Subset_Union_left: forall (A : FinSet) B C, Subset (Union A B) C -> Subset A C.
+Proof.
+  intros A B C.  unfold Subset. induction A as [| x0 A0 HA].
+  - intros. simpl in H0. discriminate.
+  - intros. simpl in H0. rewrite orb_true_iff in H0. simpl in H. destruct H0.
+    + pose (H1 := H x). rewrite orb_true_iff in H1. rewrite H0 in H1. apply H1. left. reflexivity.
+    + pose (H1 := H x). rewrite orb_true_iff in H1. pose (HIn := In_Union x A0 B). 
+       unfold In in HIn. apply HIn in H0. apply H1. right. assumption.
+Qed.
+
+Lemma Subset_Union_right: forall (A : FinSet) B C, Subset (Union A B) C -> Subset B C.
+Proof.
+  intros. rewrite Union_comm in H.  apply (Subset_Union_left B A C). assumption.
 Qed.
 
 
@@ -307,6 +342,19 @@ Proof.
   - simpl. rewrite orb_true_iff. right. assumption.
 Qed.
 
+
+(* Some trivila useful lemmas about Add *)
+Lemma trivial_Add: forall (x:U) A, Add x A = A -> In x A.
+Proof.
+  intros. induction A as [| x0 A0 HA] eqn:E.
+  - simpl in H. inversion H.
+  - inversion H. rewrite Add_same. apply In_Add. left. reflexivity.
+Qed.
+
+Lemma trivial_Add_contrapos: forall (x:U) A, ~ (In x A) -> ~ (Add x A = A).
+Proof.
+  intros x A. apply contrapos. apply trivial_Add.
+Qed. 
 
 
 (* Definition of removing a single element *)
@@ -401,50 +449,70 @@ Proof.
 Qed.
 
 
-(* A set with no repeated elements in its syntactic structure *)
-Fixpoint TrueSet (A : FinSet) : bool :=
+(* A set with no repeated elements in its syntactic structure - inductive definition *)
+Inductive TrueSet : FinSet -> Prop :=
+  | TrueSet_empty: TrueSet Empty_set
+  | TrueSet_add (x : U) (A : FinSet): TrueSet A -> ~ In x A -> TrueSet (Add x A).  
+
+(* A set with no repeated elements in its syntactic structure - boolean definition*)
+Fixpoint TrueSet_bool (A : FinSet) : bool :=
   match A with
     | Empty_set => true
-    | Add x A0 => if mem x A0 then false else TrueSet A0
+    | Add x A0 => if mem x A0 then false else TrueSet_bool A0
   end.  
 
-Lemma TrueSet_mono: forall (x : U) A, TrueSet (Add x A) = true -> TrueSet A = true. 
+(* Connection between the two definitions *)
+Lemma TrueSet_iff: forall A, TrueSet A <-> TrueSet_bool A = true.
 Proof. 
-  intros. simpl in H. pose (HIn := In_excluded_middle x A). destruct HIn.
-  - unfold In in H0. rewrite H0 in H. discriminate.
-  - unfold In in H0. apply not_true_is_false in H0. rewrite H0 in H. assumption.
+  intros. split.
+  - induction A as [| x0 A0 HA].
+    + intros. simpl. reflexivity.
+    + simpl. intros. pose (Hmem := In_excluded_middle x0 A0). destruct Hmem.
+      ++ inversion H. unfold not in H4. exfalso. apply H4. assumption.
+      ++ inversion H. unfold In in H4. apply not_true_is_false in H4. rewrite H4. apply HA. assumption.
+  - induction A as [| x0 A0 HA].
+    + intros. apply TrueSet_empty.
+    + intros. apply TrueSet_add.
+      ++ simpl in H. pose (Hmem := In_excluded_middle x0 A0). destruct Hmem.
+        ** unfold In in H0. rewrite H0 in H. discriminate.
+        ** unfold In in H0.  apply not_true_is_false in H0. rewrite H0 in H. apply HA. assumption.
+      ++ simpl in H. pose (Hmem := In_excluded_middle x0 A0). destruct Hmem.
+        ** unfold In in H0. rewrite H0 in H. discriminate.
+        ** assumption.
 Qed.
 
+Lemma TrueSet_mono: forall (x : U) A, TrueSet (Add x A) -> TrueSet A. 
+Proof. 
+  intros. inversion H. assumption.
+Qed.
 
 (* For a true set, removing element means that it does not exist anymore in a set *)
-Lemma Remove_In: forall (x : U) A, TrueSet A = true -> ~ In x (Remove x A).
+Lemma Remove_In: forall (x : U) A, TrueSet A -> ~ In x (Remove x A).
 Proof. 
   intros. induction A as [| x0 A0 HA].
-  - unfold In in H. simpl in H. discriminate.
+  - simpl. unfold not. intros. pose (H1 := In_Empty x). apply H1. assumption.
   - simpl. pose (Hequiv := equiv_excluded_middle x x0). destruct Hequiv.
-    + rewrite H0. pose (HIn := In_excluded_middle x0 A0). destruct HIn.
-      ++ simpl in H. unfold In in H1. rewrite H1 in H. discriminate. 
-      ++ rewrite equiv_extensionality in H0. rewrite H0. assumption. 
-    + rewrite H0. rewrite In_Add. unfold not. intros. destruct H1.
-      ++ rewrite H1 in H0. rewrite equiv_refl in H0. discriminate.
-      ++ apply TrueSet_mono in H. apply HA in H. unfold not in H. apply H. assumption.
+    + rewrite H0. inversion H. rewrite equiv_extensionality in H0. rewrite H0. assumption.
+    + rewrite H0. inversion H. apply In_inside_not. 
+      ++ rewrite equiv_extensionality_false in H0. assumption.
+      ++ apply HA. assumption.
 Qed.
 
+
 (* For a true set, removing element repeatedly does not additionally affect a set *)
-Lemma Remove_same: forall (x : U) A, TrueSet A = true -> Remove x (Remove x A) = Remove x A.
+Lemma Remove_same: forall (x : U) A, TrueSet A -> Remove x (Remove x A) = Remove x A.
 Proof.
   intros. induction A as [| x0 A0 HA].
   - simpl. reflexivity.
   - pose (Hequiv := equiv_excluded_middle x x0). destruct Hequiv.
-    + apply (Remove_In x0 (Add x0 A0)) in H. rewrite equiv_extensionality in H0.  rewrite <- H0. 
+    + rewrite equiv_extensionality in H0.  rewrite <- H0. apply (Remove_In x0 (Add x0 A0)) in H.
        rewrite <- H0 in H. apply Remove_noexist in H. assumption.
-    + apply equiv_extensionality_false in H0. pose (H1 := Remove_Add_different x x0 A0).
+    + apply equiv_extensionality_false in H0. pose (H1 := Remove_Add_different x x0 A0). 
        pose (H2 := Remove_Add_different x x0 (Remove x A0)). rewrite H1.
-      ++ rewrite H2.
-        ** apply TrueSet_mono in H. apply HA in H. rewrite H. reflexivity.
-        ** assumption.
+      ++ inversion H. apply HA in H5. rewrite H5 in H2. apply H2. assumption.
       ++ assumption.
 Qed.
+
 
 (* Definition of a set diffefrence *)
 Fixpoint Set_diff (A : FinSet) B : FinSet := 
@@ -454,7 +522,7 @@ Fixpoint Set_diff (A : FinSet) B : FinSet :=
   end.
 
 (* Connection between set difference and Remove*)
-Lemma Set_diff_remove: forall (x : U) A, Remove x A = Set_diff A (Singleton x).
+Lemma Remove_set_diff: forall (x : U) A, Remove x A = Set_diff A (Singleton x).
 Proof.
   intros. unfold Singleton, Set_diff. reflexivity.
 Qed.
@@ -473,40 +541,147 @@ Proof.
   - simpl. rewrite equiv_refl. assumption.
 Qed.
 
-
-Lemma In_Add_noexist: forall (x : U) x0 A, ~ In x (Add x0 A) -> ~ In x A.
+(* Monotonicity of membership *)
+Lemma In_Add_exists: forall (x : U) x0 A, In x A -> In x (Add x0 A).
 Proof.
-  intros. pose (Hequiv := equiv_excluded_middle x0 x). destruct Hequiv. 
-  - unfold In in H. rewrite equiv_extensionality in H0. rewrite H0 in H. simpl in H.
-    rewrite orb_true_iff in H. rewrite equiv_refl in H. exfalso. apply H. left. reflexivity.
-  - rewrite In_Add in H. unfold not. intros. destruct H. right. assumption.
+ intros. unfold In. simpl. rewrite orb_true_iff. unfold In in H. right. assumption.
 Qed.
 
+(* Antimonotonicity of non-membership *)
+Lemma In_Add_noexist: forall (x : U) x0 A, ~ In x (Add x0 A) -> ~ In x A.
+Proof.
+  intros x x0 A. apply contrapos. apply In_Add_exists.
+Qed.
+
+
+(* Set_diff and Remove can be swapped *)
+Lemma Set_diff_Remove: 
+  forall (x: U) A B, Set_diff (Remove x A) B = Remove x (Set_diff A B).
+Proof.
+  intros. rewrite <- set_extensionality. unfold Same_set. split.
+  - generalize dependent A. induction B as [| y0 B0 HB].
+    + simpl. intros. apply Subset_refl.
+    + simpl. intros. pose (H := HB (Remove y0 A)). rewrite Remove_twice. assumption.
+  - generalize dependent A. induction B as [| y0 B0 HB].
+    + simpl. intros. apply Subset_refl.
+    + simpl. intros. pose (H := HB (Remove y0 A)). rewrite (Remove_twice y0 x A). assumption.
+Qed.
+
+
+(* Add can be moved out of Set_diff *)
 Lemma Set_diff_Add: forall (x : U) A B, ~ In x B -> Set_diff (Add x A) B = Add x (Set_diff A B).
 Proof.
   intros. induction B as [| x0 B0 HB].
   - simpl. reflexivity.
   - simpl. pose (Hequiv := equiv_excluded_middle x0 x). destruct Hequiv.
-    + rewrite H0. apply In_Add_noexist in H. apply HB in H.
+    + rewrite H0. rewrite equiv_extensionality in H0. rewrite H0 in H. unfold not in H.
+       exfalso. apply H. apply In_Add_same.
+    + rewrite H0. rewrite equiv_extensionality_false in H0. pose (H1 := Remove_Add_different x0 x).
+       pose (H2 := (H1 A) H0). rewrite <- H2. rewrite Set_diff_Remove. rewrite Set_diff_Remove.
+       pose (H3 := H1 (Set_diff A B0) H0). rewrite <- H3.  apply In_Add_noexist in H. apply HB in H.
+       rewrite H. reflexivity.
+Qed.
+
+(* Removing a different element does not affect membership *)
+Lemma In_Remove: forall (x : U) y A, (x <> y) -> In x (Remove y A) -> In x A.
+Proof.
+  intros. induction A as [| x0 A0 HA].
+  - simpl in H0. assumption.
+  - pose (Hequiv := equiv_excluded_middle y x0). destruct Hequiv.
+    + rewrite equiv_extensionality in H1. rewrite H1 in H0. rewrite Remove_Add in H0.
+       apply In_Add. right. assumption.
+    + apply In_Add. pose (Hequiv := equiv_excluded_middle x x0). destruct Hequiv.
+      ++ rewrite equiv_extensionality in H2. left. assumption.
+      ++ right. apply HA. rewrite equiv_extensionality_false in H1. 
+           rewrite (Remove_Add_different _ _ _ H1) in H0. rewrite equiv_extensionality_false in H2.
+           apply In_Add in H0. destruct H0.
+        ** unfold not in H2. exfalso. apply H2. assumption.
+        ** assumption.
+Qed.
+
+
+(* Subset and Add connection *)
+Lemma Subset_Add_iff: forall (x:U) A B, Subset (Add x A) B <-> In x B /\ Subset A B.
+Proof.
+  intros. split.
+  - intros. unfold Subset in H. simpl in H. split.
+    + unfold In. apply H. rewrite orb_true_iff. left. apply equiv_refl.
+    + unfold Subset. intros. apply H. rewrite orb_true_iff. right. assumption.
+  - unfold Subset. intros. simpl in H0. rewrite orb_true_iff in H0. destruct H0.
+    + destruct H. rewrite equiv_extensionality in H0. rewrite <- H0 in H. unfold In in H. assumption.
+    + apply H. assumption.
+Qed.
+
 
 (*
-Lemma In_Add_noexist: forall (x : U) x0 A, ~ In x (Add x0 A) -> ~ 
 
-Lemma Set_diff_remove_once: 
-  forall (x: U) A B, Set_diff (Remove x A) B = Remove x (Set_diff A B).
+Lemma TrueSet_Subset: forall (x : U) A B, TrueSet A -> Subset B A -> TrueSet B.
 Proof.
-  intros. rewrite <- set_extensionality. unfold Same_set. split.
-  - generalize dependent B. induction B as [| y0 B0 HB].
-    + simpl. apply Subset_refl.
-    + simpl.
+  intros. induction B as [| y0 B0 HB].
+  - apply TrueSet_empty.
+  - rewrite Subset_Add_iff in H0. destruct H0. apply TrueSet_add.
+    + apply HB. assumption.
+    +
+
+ induction A as [| x0 A0 HA] eqn:HE2.
+    + unfold Subset in H0. simpl in H0. pose (H1 := H0 y0). rewrite orb_true_iff in H1. 
+       exfalso. apply diff_false_true. apply H1. left. apply equiv_refl.
+    + inversion H. apply TrueSet_add.
+           
+
+
+Lemma In_Set_diff: forall (x : U) A B, TrueSet A = true -> In x (Set_diff A B) -> In x A /\  ~ (In x B).
+Proof. 
+  intros. induction B as [| x0 B0 HB].
+  - simpl in H. split.
+    + assumption.
+    + unfold In. simpl. unfold not. intros. discriminate.
+  - simpl in H0. pose (Hequiv := equiv_excluded_middle x x0). destruct Hequiv.
+    + rewrite equiv_extensionality in H1. rewrite <- H1 in H0. rewrite Set_diff_Remove in H0.
+       Search (In ?x (Remove ?x ?A)). 
+
+
+(*
+Lemma TrueSet_Subset: forall (x : U) A B, TrueSet A = true -> Subset B A -> TrueSet B = true.
+Proof.
+  intros. induction B as [| y0 B0 HB].
+  - simpl. reflexivity.
+  - simpl. pose (HIn := In_excluded_middle y0 B0). unfold In in HIn. destruct HIn.
+    + rewrite H1.
+
+  - apply Subset_empty in H0. rewrite H0. simpl. reflexivity. 
+  - apply HA.
+    + apply (TrueSet_mono x0). assumption.
+    + simpl in H. pose (HIn := In_excluded_middle x0 A0). unfold In in HIn. destruct HIn. 
+      ++ rewrite H1 in H. discriminate.
+      ++ apply not_true_is_false in H1. rewrite H1 in H. unfold Subset in H0. unfold Subset.
+           intros. apply H0 in H2. simpl in H2. rewrite orb_true_iff in H2. destruct H2.
+        ** rewrite equiv_extensionality in H2. rewrite H2. 
+
+Lemma forall (x : U) A B, Subset (Set_diff A (Add x B)) (Set_diff A B).
+*)
+
+
+
+
+Lemma Subset_Remove: 
+  forall (x : U) A B, TrueSet A = true -> TrueSet B = true -> Subset A B -> 
+    Subset (Remove x A) (Remove x B).
+Proof.
+  intros.
+  - unfold Subset. intros. induction A as [| x1 A1 HA].
+    + simpl in H0. discriminate.
+    + apply HA.
+      ++  apply TrueSet_mono in H. assumption. 
+      ++ apply Subset_Add in H1. assumption.
+      ++  
 
 Lemma Set_diff_mono_left:  
   forall (A : FinSet) A' B, Subset A A' -> Subset (Set_diff A B) (Set_diff A' B).
 Proof. 
   intros. generalize dependent A. generalize dependent A'. induction B as [| x0 B0 HB].
   - intros. rewrite Set_diff_empty. rewrite Set_diff_empty. assumption.
-  - intros. simpl.
-
+  - intros. simpl. rewrite Set_diff_Remove.  rewrite Set_diff_Remove.
 
 
 Lemma In_Set_diff: forall (x : U) A B, In x (Set_diff A B) -> In x A /\  ~ (In x B).
