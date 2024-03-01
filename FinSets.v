@@ -773,6 +773,15 @@ Proof.
 Qed.
     
 
+(* Set difference for a bigger set *)
+Lemma Set_diff_bigger:  forall (A : FinSet) B, Subset A B -> Set_diff A B = Empty_set.
+Proof.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. unfold Subset in H. rewrite In_mem_true in *. rewrite In_Set_diff in H0.
+    destruct H0. unfold In in *. apply H in H0. contradiction.
+  - intros. rewrite In_mem_true in H0. pose (Hcontra := In_Empty x). contradiction.
+Qed.
+
 
 
 (* recursively built intersection of two sets *)
@@ -782,6 +791,7 @@ Fixpoint Inter (A : FinSet) (B : FinSet) :=
   | Add x A0 => if mem x B then Add x (Inter A0 B) else Inter A0 B   
   end.
 
+(* A couple of obvious facts about intersection and empty sets *)
 Lemma Inter_Empty_right: forall (A : FinSet), Inter A Empty_set = Empty_set.
 Proof.
   intros. induction A as [| x0 A0 HA]; simpl. reflexivity. assumption.
@@ -792,55 +802,140 @@ Proof.
   intros. simpl. reflexivity.
 Qed.
 
+(* Essential property of intersection -- for the first argument *)
+Lemma Inter_In_right: forall (x : U) A B, In x (Inter A B) -> In x B. 
+Proof.
+  intros. induction A as [| x0 A0 HA].
+  - simpl in H. pose (Hcontra := In_Empty x). contradiction.
+  - simpl in H. pose (HIn := In_excluded_middle x0 B). destruct HIn.
+    + unfold In in H0. rewrite H0 in H. destruct (equiv x x0) eqn:Heq.
+      ++ rewrite equiv_extensionality in Heq. rewrite Heq. unfold In. assumption.
+      ++ rewrite equiv_extensionality_false in Heq. apply In_inside in H.
+        ** apply HA. assumption.
+        ** assumption.
+    + rewrite <- In_mem_false in H0. rewrite H0 in H. auto.
+Qed. 
+
+(* Essential property of intersection --  for the second argument  *)
+Lemma Inter_In_left: forall (x : U) A B, In x (Inter A B) -> In x A.
+Proof.
+   intros. induction A as [| x0 A0 HA].
+  - simpl in H. pose (Hcontra := In_Empty x). contradiction.
+  - simpl in H. pose (HIn := In_excluded_middle x0 B). destruct HIn.
+    + unfold In in H0. rewrite H0 in H. destruct (equiv x x0) eqn:Heq.
+      ++ rewrite equiv_extensionality in Heq. rewrite Heq in *. rewrite In_Add. 
+           left. reflexivity.
+      ++ rewrite In_Add. right. rewrite equiv_extensionality_false in Heq. apply HA.
+           apply In_inside in H. assumption. assumption.
+    + rewrite <- In_mem_false in H0. rewrite H0 in H. destruct (equiv x x0) eqn:Heq.
+      ++ rewrite equiv_extensionality in Heq. rewrite Heq. rewrite In_Add. left. reflexivity.
+      ++ rewrite In_Add. right. apply HA. assumption.
+Qed.
+
+(* Essential property of intersection --  for both arguments *)
+Lemma Inter_In: forall (x : U) A B, In x (Inter A B) -> In x A /\ In x B.
+Proof.
+  intros. split.
+    - apply (Inter_In_left _ _ B). assumption.
+    - apply (Inter_In_right _ A _). assumption.
+Qed.
 
 
-(*
+(* Essential property of intersection --  in the opposite direction *)
+Lemma Inter_In_rev: forall (x : U) A B, In x A /\ In x B -> In x (Inter A B).
+Proof.
+  intros. destruct H. induction A as [| x0 A0 HA].
+  - simpl in H. pose (Hcontra := In_Empty x). contradiction.
+  - simpl. pose (HIn := In_excluded_middle x0 B). destruct HIn.
+    + assert (mem x0 B = true). unfold In in H1. assumption. rewrite H2. rewrite In_Add.
+       destruct (equiv x0 x) eqn:Heq.
+      ++ left. rewrite equiv_extensionality in Heq. auto.
+      ++ right. apply HA. rewrite In_Add in H. destruct H. 
+           rewrite equiv_extensionality_false in Heq. symmetry in H. contradiction.
+           assumption.
+    + assert (mem x0 B = false). unfold In in H1. apply not_true_is_false in H1.
+       assumption. rewrite H2. rewrite In_Add in H. destruct H.
+      ++ rewrite H in H0. contradiction.
+      ++ apply HA. assumption.
+Qed.
+
+
+(* Combining properties into equivalence *)
+Lemma Inter_In_iff: forall (x : U) A B, In x (Inter A B) <-> In x A /\ In x B.
+Proof.
+  intros. split. intros.
+  - apply Inter_In. assumption.
+  - intros. apply Inter_In_rev. assumption.
+Qed.
+       
+
+(* Adding to both sets means adding to the intersection *)
 Lemma Inter_Add_both: 
   forall (x : U) A B, Inter (Add x A) (Add x B) = Add x (Inter A B). 
 Proof.
-  intros. simpl. rewrite equiv_refl.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite In_Add. apply Inter_In_iff in H. destruct H.
+    rewrite In_Add in H. rewrite In_Add in H0. destruct H. left. assumption. destruct H0.
+    left. assumption. right. rewrite Inter_In_iff. split; assumption.
+  - intros. rewrite In_mem_true in *. rewrite Inter_In_iff. rewrite In_Add in H. destruct H.
+    + rewrite H. split; apply In_Add_same.
+    + rewrite Inter_In_iff in H. destruct H. split; rewrite In_Add; right; assumption.
+Qed. 
 
+
+(* Commutativity of intersection *)
 Lemma Inter_comm: forall (A : FinSet) B, Inter A B = Inter B A.
 Proof.
-  intros. induction A as [| x0 A0 HA].
-  - simpl. induction B as [| y0 B0 HB].
-    + simpl. reflexivity.
-    + destruct HB. simpl. reflexivity.
-  - simpl. induction B as [| y0 B0 HB].
-    + simpl. reflexivity.
-    + destruct (mem x0 (Add y0 B0)) eqn:H1.
-      ++ simpl in H1. destruct HB.
-        ** simpl in HA. destruct HA.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite Inter_In_iff in *. destruct H. split; assumption.
+  - intros. rewrite In_mem_true in *. rewrite Inter_In_iff in *. destruct H. split; assumption.
+Qed.
 
-Lemma Inter_prop: forall (x : U) A B, In x (Inter A B) <->  In x A /\ In x B.
+
+
+(* Associativity of intersection -- on the first argument *)
+Lemma Inter_assoc_left: 
+  forall (A : FinSet) B C, Inter (Union A B) C = Union (Inter A C) (Inter B C).
 Proof.
-  intros. split.
-  - intros. induction A as [| x0 A0 HA].
-    + simpl in H.    
- 
-  - intros. induction A as [| x0 A0 HA]; induction B as [| y0 B0 HB]; intros; split; intros.
-    + simpl in H. assumption.
-    + simpl in H. assumption.
-    + simpl in H. assumption.
-    + simpl in H. pose (H1 := In_Empty x). contradiction.
-    + simpl in H. pose (H1 := In_Empty x). contradiction.
-    + simpl in H. assumption.
-    + simpl in H. destruct (equiv x0 y0 || mem x0 B0). rewrite In_Add in H. destruct H.
-      ++ rewrite H. rewrite In_Add. left. reflexivity.
-      ++ 
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite In_Union_either. 
+    rewrite Inter_In_iff in H. destruct H. rewrite In_Union_either in H. destruct H.
+    + left. rewrite Inter_In_iff. split; assumption.
+    + right. rewrite Inter_In_iff. split; assumption. 
+  - intros. rewrite In_mem_true in *. rewrite In_Union_either in H. destruct H.
+    + rewrite Inter_In_iff in *. destruct H. rewrite In_Union_either. split.
+      ++ left. assumption.
+      ++ assumption.
+    + rewrite Inter_In_iff in *. destruct H. rewrite In_Union_either. split.
+      ++ right. assumption.
+      ++ assumption.
+Qed.
 
-(* Set intersection as a Coq proposition *)
-Definition Inter (A : FinSet) B  C: Prop := 
-  forall (x : U), In x C -> In x A /\ In x B. 
-
-Lemma Set_diff_bigger:  forall (A : FinSet) B, Subset A B -> Set_diff A B = Empty_set.
+(* Associativity of intersection -- on the second argument *)
+Lemma Inter_assoc_right: 
+  forall (A : FinSet) B C, Inter A (Union B C) = Union (Inter A B) (Inter A C).
 Proof.
-  intros. induction B as [| x0 B0 HB].
-  - apply Subset_empty in H. rewrite H. rewrite Set_diff_empty. reflexivity.
-  - simpl. assert (Subset (Remove x0 A) A) as H1. apply Remove_subset.
-    rewrite Set_diff_Remove.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite In_Union_either. rewrite Inter_In_iff in H.
+    destruct H. rewrite In_Union_either in H0. destruct H0.
+    + left. rewrite Inter_In_iff. split; assumption.
+    + right. rewrite Inter_In_iff. split; assumption.
+  - intros. rewrite In_mem_true in *. rewrite In_Union_either in H. destruct H.
+    + rewrite Inter_In_iff in *. destruct H. split.
+      ++ assumption.
+      ++ rewrite In_Union_either. left. assumption.
+    + rewrite Inter_In_iff in *. destruct H. split.
+      ++ assumption.
+      ++ rewrite In_Union_either. right. assumption.
+Qed.                 
 
-(* Set comprehension? *)
+
+(*
+
+Lemma Inter_assoc: 
+  forall (A : FinSet) B C, Inter A (Union B C) = Union (Inter A B) (Inter A C).
+
+(* Set comprehension, map, fold? *)
 *)
 
 End FinSets.
