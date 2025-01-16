@@ -91,12 +91,13 @@ Proof.
     + unfold Subset. intros. simpl in H0. discriminate.
 Qed.
 
+(*Empty set is a subset of any set *)
 Lemma Subset_Empty: forall (A : FinSet), Subset Empty_set A.
 Proof.
   intros. unfold Subset. intros. simpl in H. discriminate.
 Qed.
 
-(* an element is a member after addition *)
+(* An added element is a member after addition *)
 Lemma In_Add_same: forall (x:U) A, In x (Add x A).
 Proof.
   intros. unfold In. simpl. rewrite orb_true_iff. left. rewrite equiv_extensionality. reflexivity.
@@ -115,7 +116,7 @@ Proof.
 Qed.
 
 
-(* two trivial properties for unions involving emprty sets *)
+(* two trivial properties for unions involving empty sets *)
 Lemma Union_Empty_left: forall (A : FinSet), Union Empty_set A = A.
 Proof.
   intros. induction A as [| x0 A0 HA]; simpl; reflexivity.
@@ -130,7 +131,7 @@ Qed.
 
 
 (* membership in Union *)
-Lemma In_Union: forall (x:U) A B, In x A -> In x (Union A B).
+Lemma In_Union_implies: forall (x:U) A B, In x A -> In x (Union A B).
 Proof.
   intros. induction A as [| x0 A0 HA].
   - simpl. exfalso. apply (In_Empty x). assumption.
@@ -139,7 +140,7 @@ Proof.
     + unfold In in HA. apply HA in H. right. unfold In. assumption.
 Qed.
 
-Lemma In_Union_either: 
+Lemma In_Union: 
   forall (x:U) A B, In x (Union A B) <-> In x A \/ In x B.
 Proof.
   intros. split. 
@@ -151,7 +152,7 @@ Proof.
         ** left. right. assumption.
         ** right. assumption.
   - intros. destruct H.
-    + apply In_Union. assumption.
+    + apply In_Union_implies. assumption.
     + induction A as [| x0 A0 HA].
       ++ unfold In. simpl. unfold In in H. assumption.
       ++ unfold In. simpl. rewrite orb_true_iff. unfold In in HA. right. assumption.
@@ -162,12 +163,12 @@ Qed.
 Lemma Union_comm: forall (A : FinSet) B, Union A B = Union B A.
 Proof.
   intros. rewrite <- set_extensionality. unfold Same_set. split.
-  - unfold Subset. intros. pose (HAB := In_Union_either x A B).  rewrite HAB in H.
-    pose (HBA := In_Union_either x B A). rewrite HBA. destruct H.
+  - unfold Subset. intros. pose (HAB := In_Union x A B).  rewrite HAB in H.
+    pose (HBA := In_Union x B A). rewrite HBA. destruct H.
     + right. assumption.
     + left. assumption.
-  - unfold Subset. intros. pose (HAB := In_Union_either x A B). rewrite HAB.
-    pose (HBA := In_Union_either x B A). rewrite HBA in H. destruct H.
+  - unfold Subset. intros. pose (HAB := In_Union x A B). rewrite HAB.
+    pose (HBA := In_Union x B A). rewrite HBA in H. destruct H.
     + right. assumption.
     + left. assumption.
 Qed.
@@ -177,19 +178,19 @@ Qed.
 Lemma Union_assoc: forall (A : FinSet) B C, Union A (Union B C) = Union (Union A B) C.
 Proof.
   intros.  rewrite <- set_extensionality. unfold Same_set. split.
-  - unfold Subset. intros. pose (HA_BC := In_Union_either x A (Union B C)). 
+  - unfold Subset. intros. pose (HA_BC := In_Union x A (Union B C)). 
     rewrite HA_BC in H. destruct H.
-    + pose (HAB_C := In_Union_either x (Union A B) C). rewrite HAB_C. left. 
-       apply In_Union_either. left. assumption.
-    + apply In_Union_either in H. destruct H.
-      ++  apply In_Union_either. left. apply In_Union_either. right. assumption. 
-      ++ apply In_Union_either. right. assumption.
-  - unfold Subset. intros. pose (HAB_C := In_Union_either x (Union A B) C).
+    + pose (HAB_C := In_Union x (Union A B) C). rewrite HAB_C. left. 
+       apply In_Union. left. assumption.
+    + apply In_Union in H. destruct H.
+      ++  apply In_Union. left. apply In_Union. right. assumption. 
+      ++ apply In_Union. right. assumption.
+  - unfold Subset. intros. pose (HAB_C := In_Union x (Union A B) C).
     rewrite HAB_C in H. destruct H.
-    + apply In_Union_either in H. destruct H.
-      ++ apply In_Union_either. left. assumption.
-      ++ apply In_Union_either. right. apply In_Union_either. left. assumption.
-    + apply In_Union_either. right. apply In_Union_either. right. assumption.
+    + apply In_Union in H. destruct H.
+      ++ apply In_Union. left. assumption.
+      ++ apply In_Union. right. apply In_Union. left. assumption.
+    + apply In_Union. right. apply In_Union. right. assumption.
 Qed.  
 
 
@@ -305,7 +306,7 @@ Proof.
   - intros. simpl in H0. discriminate.
   - intros. simpl in H0. rewrite orb_true_iff in H0. simpl in H. destruct H0.
     + pose (H1 := H x). rewrite orb_true_iff in H1. rewrite H0 in H1. apply H1. left. reflexivity.
-    + pose (H1 := H x). rewrite orb_true_iff in H1. pose (HIn := In_Union x A0 B). 
+    + pose (H1 := H x). rewrite orb_true_iff in H1. pose (HIn := In_Union_implies x A0 B). 
        unfold In in HIn. apply HIn in H0. apply H1. right. assumption.
 Qed.
 
@@ -364,7 +365,7 @@ Proof.
 Qed.
 
 
-(* Some trivila useful lemmas about Add *)
+(* Some trivial useful lemmas about Add *)
 Lemma trivial_Add: forall (x:U) A, Add x A = A -> In x A.
 Proof.
   intros. rewrite Add_existing. assumption.
@@ -397,6 +398,7 @@ Fixpoint Remove (x : U) (A : FinSet) : FinSet :=
     | Add y B => if equiv x y then Remove x B else Add y (Remove x B)  
   end.
 
+(* An element is not in aset after its removal *)
 Lemma In_Remove: forall (x:U) A, ~ In x (Remove x A).
 Proof. 
   intros. unfold In, not. induction A as [| x0 A0 HA].
@@ -440,6 +442,7 @@ Proof.
     + rewrite H. rewrite Add_twice. rewrite HA. rewrite Add_twice. reflexivity.
 Qed.
 
+(*An element is still in a set after removal of a different element *)
 Lemma In_Remove_different: forall (x:U) y A, ~(x = y) -> In y A -> In y (Remove x A).
 Proof.
   intros. 
@@ -474,6 +477,7 @@ Proof.
         ** reflexivity.
 Qed.
 
+(* If element is a set after removal, it was there before it *)
 Lemma In_Remove_different_rev: forall (x:U) y A, ~(x = y) -> In y (Remove x A) -> In y A.
 Proof.
   intros. induction A as [| x0 A0 HA].
@@ -587,6 +591,7 @@ Proof.
 Qed.
 
 
+(* Set difference of a set and itself gives an empty set *)
 Lemma Set_diff_same: forall (A : FinSet), Set_diff A A = Empty_set. 
 Proof. 
   intros. induction A as [| x0 A0 HA].
@@ -679,6 +684,7 @@ Proof.
   - apply In_Set_diff_2.
 Qed.    
 
+(* Some trivial helper lemmas *)
 Lemma In_mem_true: forall (x : U) A, mem x A = true <-> In x A.
 Proof.
   intros. unfold In. split; intros; assumption.
@@ -718,13 +724,14 @@ Proof.
 Qed.
 
 
-(* Several helper lemmas *)
+(* Removing element after adding is the same as jusr removing it *)
 Lemma Remove_Add_eq: forall (x : U) A, Remove x (Add x A) = Remove x A.
 Proof.
   intros. simpl. rewrite equiv_refl. reflexivity.
 Qed.
 
 
+(* Removing element from both sets preserves the subset relationship *)
 Lemma Subset_Remove_both: 
   forall (x:U) A B, Subset A B -> Subset (Remove x A) (Remove x B).
 Proof.
@@ -732,14 +739,14 @@ Proof.
   - simpl. apply Subset_Empty.
   - simpl. pose (Hequiv := equiv_excluded_middle x x0). destruct Hequiv.
     + rewrite H0. rewrite Subset_Add_iff in H. destruct H. apply HA. assumption.
-    + rewrite H0. rewrite Subset_Add_iff in H. destruct H. Search (In ?x (Remove ?y ?A)).
+    + rewrite H0. rewrite Subset_Add_iff in H. destruct H.
        rewrite Subset_Add_iff. split.
       ++ rewrite equiv_extensionality_false in H0. apply In_Remove_iff. 
            unfold not. intros. apply H0. symmetry in H2. assumption. assumption.
       ++ apply HA. assumption.
 Qed.
 
-
+(* Adding the same element preserves the subset relationship *)
 Lemma Subset_Add_both: 
   forall (x:U) A B, Subset A B -> Subset (Add x A) (Add x B).
 Proof.
@@ -750,7 +757,7 @@ Proof.
       ++ apply (Subset_trans A B (Add x B)). assumption. assumption.
 Qed.
 
-
+(* Removing the same element from union of two sets *)
 Lemma Union_Remove_both: 
   forall (x:U) A B, Union (Remove x A) (Remove x B) = Remove x (Union A B).
 Proof.
@@ -773,6 +780,15 @@ Proof.
 Qed.
     
 
+(* Set difference for a bigger set *)
+Lemma Set_diff_bigger:  forall (A : FinSet) B, Subset A B -> Set_diff A B = Empty_set.
+Proof.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. unfold Subset in H. rewrite In_mem_true in *. rewrite In_Set_diff in H0.
+    destruct H0. unfold In in *. apply H in H0. contradiction.
+  - intros. rewrite In_mem_true in H0. pose (Hcontra := In_Empty x). contradiction.
+Qed.
+
 
 
 (* recursively built intersection of two sets *)
@@ -782,6 +798,7 @@ Fixpoint Inter (A : FinSet) (B : FinSet) :=
   | Add x A0 => if mem x B then Add x (Inter A0 B) else Inter A0 B   
   end.
 
+(* A couple of obvious facts about intersection and empty sets *)
 Lemma Inter_Empty_right: forall (A : FinSet), Inter A Empty_set = Empty_set.
 Proof.
   intros. induction A as [| x0 A0 HA]; simpl. reflexivity. assumption.
@@ -793,57 +810,137 @@ Proof.
 Qed.
 
 
+(* Essential property of intersection -- for the first argument *)
+Lemma Inter_In_right: forall (x : U) A B, In x (Inter A B) -> In x B. 
+Proof.
+  intros. induction A as [| x0 A0 HA].
+  - simpl in H. pose (Hcontra := In_Empty x). contradiction.
+  - simpl in H. pose (HIn := In_excluded_middle x0 B). destruct HIn.
+    + unfold In in H0. rewrite H0 in H. destruct (equiv x x0) eqn:Heq.
+      ++ rewrite equiv_extensionality in Heq. rewrite Heq. unfold In. assumption.
+      ++ rewrite equiv_extensionality_false in Heq. apply In_inside in H.
+        ** apply HA. assumption.
+        ** assumption.
+    + rewrite <- In_mem_false in H0. rewrite H0 in H. auto.
+Qed. 
 
-(*
+(* Essential property of intersection --  for the second argument  *)
+Lemma Inter_In_left: forall (x : U) A B, In x (Inter A B) -> In x A.
+Proof.
+   intros. induction A as [| x0 A0 HA].
+  - simpl in H. pose (Hcontra := In_Empty x). contradiction.
+  - simpl in H. pose (HIn := In_excluded_middle x0 B). destruct HIn.
+    + unfold In in H0. rewrite H0 in H. destruct (equiv x x0) eqn:Heq.
+      ++ rewrite equiv_extensionality in Heq. rewrite Heq in *. rewrite In_Add. 
+           left. reflexivity.
+      ++ rewrite In_Add. right. rewrite equiv_extensionality_false in Heq. apply HA.
+           apply In_inside in H. assumption. assumption.
+    + rewrite <- In_mem_false in H0. rewrite H0 in H. destruct (equiv x x0) eqn:Heq.
+      ++ rewrite equiv_extensionality in Heq. rewrite Heq. rewrite In_Add. left. reflexivity.
+      ++ rewrite In_Add. right. apply HA. assumption.
+Qed.
+
+
+(* Essential property of intersection --  for both arguments *)
+Lemma Inter_In: forall (x : U) A B, In x (Inter A B) -> In x A /\ In x B.
+Proof.
+  intros. split.
+    - apply (Inter_In_left _ _ B). assumption.
+    - apply (Inter_In_right _ A _). assumption.
+Qed.
+
+
+(* Essential property of intersection --  in the opposite direction *)
+Lemma Inter_In_rev: forall (x : U) A B, In x A /\ In x B -> In x (Inter A B).
+Proof.
+  intros. destruct H. induction A as [| x0 A0 HA].
+  - simpl in H. pose (Hcontra := In_Empty x). contradiction.
+  - simpl. pose (HIn := In_excluded_middle x0 B). destruct HIn.
+    + assert (mem x0 B = true). unfold In in H1. assumption. rewrite H2. rewrite In_Add.
+       destruct (equiv x0 x) eqn:Heq.
+      ++ left. rewrite equiv_extensionality in Heq. auto.
+      ++ right. apply HA. rewrite In_Add in H. destruct H. 
+           rewrite equiv_extensionality_false in Heq. symmetry in H. contradiction.
+           assumption.
+    + assert (mem x0 B = false). unfold In in H1. apply not_true_is_false in H1.
+       assumption. rewrite H2. rewrite In_Add in H. destruct H.
+      ++ rewrite H in H0. contradiction.
+      ++ apply HA. assumption.
+Qed.
+
+
+(* Combining properties into equivalence *)
+Lemma Inter_In_iff: forall (x : U) A B, In x (Inter A B) <-> In x A /\ In x B.
+Proof.
+  intros. split. intros.
+  - apply Inter_In. assumption.
+  - intros. apply Inter_In_rev. assumption.
+Qed.
+       
+
+(* Adding to both sets means adding to the intersection *)
 Lemma Inter_Add_both: 
   forall (x : U) A B, Inter (Add x A) (Add x B) = Add x (Inter A B). 
 Proof.
-  intros. simpl. rewrite equiv_refl.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite In_Add. apply Inter_In_iff in H. destruct H.
+    rewrite In_Add in H. rewrite In_Add in H0. destruct H. left. assumption. destruct H0.
+    left. assumption. right. rewrite Inter_In_iff. split; assumption.
+  - intros. rewrite In_mem_true in *. rewrite Inter_In_iff. rewrite In_Add in H. destruct H.
+    + rewrite H. split; apply In_Add_same.
+    + rewrite Inter_In_iff in H. destruct H. split; rewrite In_Add; right; assumption.
+Qed. 
 
+
+(* Commutativity of intersection *)
 Lemma Inter_comm: forall (A : FinSet) B, Inter A B = Inter B A.
 Proof.
-  intros. induction A as [| x0 A0 HA].
-  - simpl. induction B as [| y0 B0 HB].
-    + simpl. reflexivity.
-    + destruct HB. simpl. reflexivity.
-  - simpl. induction B as [| y0 B0 HB].
-    + simpl. reflexivity.
-    + destruct (mem x0 (Add y0 B0)) eqn:H1.
-      ++ simpl in H1. destruct HB.
-        ** simpl in HA. destruct HA.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite Inter_In_iff in *. destruct H. split; assumption.
+  - intros. rewrite In_mem_true in *. rewrite Inter_In_iff in *. destruct H. split; assumption.
+Qed.
 
-Lemma Inter_prop: forall (x : U) A B, In x (Inter A B) <->  In x A /\ In x B.
+
+
+(* Associativity of intersection -- on the first argument *)
+Lemma Inter_assoc_left: 
+  forall (A : FinSet) B C, Inter (Union A B) C = Union (Inter A C) (Inter B C).
 Proof.
-  intros. split.
-  - intros. induction A as [| x0 A0 HA].
-    + simpl in H.    
- 
-  - intros. induction A as [| x0 A0 HA]; induction B as [| y0 B0 HB]; intros; split; intros.
-    + simpl in H. assumption.
-    + simpl in H. assumption.
-    + simpl in H. assumption.
-    + simpl in H. pose (H1 := In_Empty x). contradiction.
-    + simpl in H. pose (H1 := In_Empty x). contradiction.
-    + simpl in H. assumption.
-    + simpl in H. destruct (equiv x0 y0 || mem x0 B0). rewrite In_Add in H. destruct H.
-      ++ rewrite H. rewrite In_Add. left. reflexivity.
-      ++ 
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite In_Union. 
+    rewrite Inter_In_iff in H. destruct H. rewrite In_Union in H. destruct H.
+    + left. rewrite Inter_In_iff. split; assumption.
+    + right. rewrite Inter_In_iff. split; assumption. 
+  - intros. rewrite In_mem_true in *. rewrite In_Union in H. destruct H.
+    + rewrite Inter_In_iff in *. destruct H. rewrite In_Union. split.
+      ++ left. assumption.
+      ++ assumption.
+    + rewrite Inter_In_iff in *. destruct H. rewrite In_Union. split.
+      ++ right. assumption.
+      ++ assumption.
+Qed.
 
-(* Set intersection as a Coq proposition *)
-Definition Inter (A : FinSet) B  C: Prop := 
-  forall (x : U), In x C -> In x A /\ In x B. 
-
-Lemma Set_diff_bigger:  forall (A : FinSet) B, Subset A B -> Set_diff A B = Empty_set.
+(* Associativity of intersection -- on the second argument *)
+Lemma Inter_assoc_right: 
+  forall (A : FinSet) B C, Inter A (Union B C) = Union (Inter A B) (Inter A C).
 Proof.
-  intros. induction B as [| x0 B0 HB].
-  - apply Subset_empty in H. rewrite H. rewrite Set_diff_empty. reflexivity.
-  - simpl. assert (Subset (Remove x0 A) A) as H1. apply Remove_subset.
-    rewrite Set_diff_Remove.
+  intros. apply set_extensionality. unfold Same_set. unfold Subset. split.
+  - intros. rewrite In_mem_true in *. rewrite In_Union. rewrite Inter_In_iff in H.
+    destruct H. rewrite In_Union in H0. destruct H0.
+    + left. rewrite Inter_In_iff. split; assumption.
+    + right. rewrite Inter_In_iff. split; assumption.
+  - intros. rewrite In_mem_true in *. rewrite In_Union in H. destruct H.
+    + rewrite Inter_In_iff in *. destruct H. split.
+      ++ assumption.
+      ++ rewrite In_Union. left. assumption.
+    + rewrite Inter_In_iff in *. destruct H. split.
+      ++ assumption.
+      ++ rewrite In_Union. right. assumption.
+Qed.                 
 
-(* Set comprehension? *)
-*)
 
 End FinSets.
+
 
 
 (* Defining finite relations*)
@@ -852,6 +949,7 @@ Section FinRelations.
 (* Section parameters - two arbitrary types and equivalence functions for them *)
 Variable T: Type.
 Variable U: Type.
+Variable W: Type.
 
 Definition Relation T U := FinSet (T * U).
 
@@ -878,8 +976,23 @@ Axiom equivU_refl : forall (x:U), equivU x x = true.
 Axiom equivU_extensionality: forall (x : U) y, equivU x y = true <-> x = y. 
 
 
+Variable equivW : W -> W -> bool.
+
+Axiom equivW_comm : forall (x:W) y, equivW x y = equivW y x.
+
+Axiom equivW_trans :  forall (x:W) y z, equivW x y = true -> equivW y z = true -> equivW x z = true.
+
+Axiom equivW_refl : forall (x:W), equivW x x = true.
+
+Axiom equivW_extensionality: forall (x : W) y, equivW x y = true <-> x = y. 
+
+
 (* Equivalence for product type defined via the corresponding given equivalences *)
 Definition equivTU (x : T*U) (y : T*U) : bool := equivT (fst x) (fst y) &&  equivU (snd x) (snd y).
+
+Definition equivTW (x : T*W) (y : T*W) : bool := equivT (fst x) (fst y) &&  equivW (snd x) (snd y).
+
+Definition equivWU (x : W*U) (y : W*U) : bool := equivW (fst x) (fst y) &&  equivU (snd x) (snd y).
 
 
 (* Recursively constructing domain, range, inverse for relations*)
@@ -954,10 +1067,630 @@ Definition product (A : FinSet T) (B : FinSet U) (C : Relation T U) : Prop :=
 
 
 
+(* Definition of relational composition *)
+Definition comp (R : Relation T W) (Q : Relation W U) (S : Relation T U) : Prop := 
+  forall (x:T) (y:U), In _ equivTU (x,y) S -> 
+    (exists (w :W), In _ equivTW (x,w) R /\ In _ equivWU (w,y) Q).
+
+
+(* Map over a finite set*)
+Fixpoint set_map (f : T -> U) (A : FinSet T) : FinSet U := 
+  match A with
+  | Empty_set _ => Empty_set _
+  | Add _ x A0 => Add _ (f x) (set_map f A0)
+  end.
+
+(* Filter over a finite set*)
+Fixpoint set_filter (f : T -> bool) (A : FinSet T) : FinSet T := 
+  match A with
+  | Empty_set _ => Empty_set _
+  | Add _ x A0 => if f x then Add _ x (set_filter f A0) else set_filter f A0
+  end. 
+
+(* Fold over a finite set *)
+Fixpoint set_fold (f : T -> U -> U) (v0 : U) (A : FinSet T) : U := 
+  match A with
+  | Empty_set _ => v0
+  | Add _ x A0 => f x (set_fold f v0 A0)
+  end. 
+
+
+(* Using domain/range restriction/subtraction operations gives us subsets *)
+Lemma dom_rest_subset: 
+  forall (S : FinSet T) (R : Relation T U), Subset _ equivTU (dom_rest S R) R.
+Proof.
+  intros. unfold Subset. intros. induction R as [| r0 R0 HR].
+  - simpl in H. discriminate.
+  - simpl in H. destruct r0. destruct (mem T equivT t S) eqn:H1.
+    + simpl in H. rewrite orb_true_iff in H. destruct H.
+      ++ simpl. rewrite orb_true_iff. left. assumption.
+      ++ simpl. rewrite orb_true_iff. right. apply HR. assumption.
+    + simpl. rewrite orb_true_iff. right. apply HR. assumption.
+Qed.
+
+
+Lemma ran_rest_subset: 
+  forall (S : FinSet U) (R : Relation T U), Subset _ equivTU (ran_rest S R) R.
+Proof.
+  intros. unfold Subset. intros. induction R as [| r0 R0 HR].
+  - simpl in H. discriminate.
+  - simpl in H. destruct r0. destruct (mem U equivU u S) eqn:H1.
+    + simpl in H. rewrite orb_true_iff in H. destruct H.
+      ++ simpl. rewrite orb_true_iff. left. assumption.
+      ++ simpl. rewrite orb_true_iff. right. apply HR. assumption.
+    + simpl. rewrite orb_true_iff. right. apply HR. assumption.
+Qed.
+
+
+Lemma dom_subt_subset: 
+  forall (S : FinSet T) (R : Relation T U), Subset _ equivTU (dom_subt S R) R.
+Proof.
+  intros. unfold Subset. intros. induction R as [| r0 R0 HR].
+  - simpl in H. discriminate.
+  - simpl in H. destruct r0. destruct (mem T equivT t S) eqn:H1.
+    + simpl. rewrite orb_true_iff. right. apply HR. assumption.
+    + simpl. rewrite orb_true_iff. simpl in H. rewrite orb_true_iff in H. destruct H.
+      ++ left. assumption.
+      ++ right. apply HR. assumption.
+Qed.
+
+
+Lemma ran_subt_subset: 
+  forall (S : FinSet U) (R : Relation T U), Subset _ equivTU (ran_subt S R) R.
+Proof.
+  intros. unfold Subset. intros. induction R as [| r0 R0 HR].
+  - simpl in H. discriminate.
+  - simpl in H. destruct r0. destruct (mem U equivU u S) eqn:H1.
+    + simpl. rewrite orb_true_iff. right. apply HR. assumption.
+    + simpl. rewrite orb_true_iff. simpl in H. rewrite orb_true_iff in H. destruct H.
+      ++ left. assumption.
+      ++ right. apply HR. assumption.
+Qed.
+
+
+(* Domain/range restriction/subtraction operations are monotonic in set arguments *)
+Lemma dom_rest_mono_left:
+  forall (S : FinSet T) S' (R : Relation T U), Subset _ equivT S S' -> 
+    Subset _ equivTU (dom_rest S R) (dom_rest S' R).
+Proof.
+  intros. unfold Subset in *. intros. induction R as [| r0 R0 HR].
+  - simpl in H0. discriminate.
+  - simpl. destruct r0. destruct (mem T equivT t S') eqn:H1.
+    + simpl. rewrite orb_true_iff. simpl in H0. destruct (mem T equivT t S) eqn:H2.
+      ++ simpl in H0. rewrite orb_true_iff in H0. destruct H0.
+        ** left. assumption.
+        ** right. apply HR. assumption.
+      ++ right. apply HR. assumption.
+    + simpl in H0. destruct (mem T equivT t S) eqn:H2.
+      ++ apply H in H2. rewrite H2 in H1. discriminate.
+      ++ apply HR. assumption.
+Qed.
+
+
+Lemma ran_rest_mono_left:
+  forall (S : FinSet U) S' (R : Relation T U), Subset _ equivU S S' -> 
+    Subset _ equivTU (ran_rest S R) (ran_rest S' R).
+Proof.
+  intros. unfold Subset in *. intros. induction R as [| r0 R0 HR].
+  - simpl in H0. discriminate.
+  - simpl. destruct r0. destruct (mem U equivU u S') eqn:H1.
+    + simpl. rewrite orb_true_iff. simpl in H0. destruct (mem U equivU u S) eqn:H2.
+      ++ simpl in H0. rewrite orb_true_iff in H0. destruct H0.
+        ** left. assumption.
+        ** right. apply HR. assumption.
+      ++ right. apply HR. assumption.
+    + simpl in H0. destruct (mem U equivU u S) eqn:H2.
+      ++ apply H in H2. rewrite H2 in H1. discriminate.
+      ++ apply HR. assumption.
+Qed.
+
+
+Lemma dom_subt_mono_left:
+  forall (S : FinSet T) S' (R : Relation T U), Subset _ equivT S S' -> 
+    Subset _ equivTU (dom_subt S' R) (dom_subt S R).
+Proof.
+  intros. unfold Subset in *. intros. induction R as [| r0 R0 HR].
+  - simpl in H0. discriminate.
+  - simpl in H0. destruct r0. destruct (mem T equivT t S') eqn:H1.
+    + simpl. destruct (mem T equivT t S) eqn:H2.
+      ++ apply HR. assumption.
+      ++ simpl. rewrite orb_true_iff. right. apply HR. assumption.
+    + simpl. destruct (mem T equivT t S) eqn:H2.
+      ++ apply H in H2. rewrite H2 in H1. discriminate.
+      ++ simpl. simpl in H0. rewrite orb_true_iff in H0. destruct H0.
+        ** rewrite orb_true_iff. left. assumption.
+        ** rewrite orb_true_iff. right. apply HR. assumption.
+Qed.
+
+
+Lemma ran_subt_mono_left:
+  forall (S : FinSet U) S' (R : Relation T U), Subset _ equivU S S' -> 
+    Subset _ equivTU (ran_subt S' R) (ran_subt S R).
+Proof.
+  intros. unfold Subset in *. intros. induction R as [| r0 R0 HR].
+  - simpl in H0. discriminate.
+  - simpl in H0. destruct r0. destruct (mem U equivU u S') eqn:H1.
+    + simpl. destruct (mem U equivU u S) eqn:H2.
+      ++ apply HR. assumption.
+      ++ simpl. rewrite orb_true_iff. right. apply HR. assumption.
+    + simpl. destruct (mem U equivU u S) eqn:H2.
+      ++ apply H in H2. rewrite H2 in H1. discriminate.
+      ++ simpl. simpl in H0. rewrite orb_true_iff in H0. destruct H0.
+        ** rewrite orb_true_iff. left. assumption.
+        ** rewrite orb_true_iff. right. apply HR. assumption.
+Qed.
+
+
+(* Domain/range restriction/subtraction operations  with empty sets as arguments *)
+Lemma dom_rest_Empty: forall (R : Relation T U), dom_rest (Empty_set T) R = Empty_set (T*U).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. assumption.
+Qed.
+
+
+Lemma ran_rest_Empty: forall (R : Relation T U), ran_rest (Empty_set U) R = Empty_set (T*U).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. assumption.
+Qed.
+
+
+Lemma dom_subt_Empty: forall (R : Relation T U), dom_subt (Empty_set T) R = R.
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. rewrite HR. reflexivity.
+Qed.
+
+
+Lemma ran_subt_Empty: forall (R : Relation T U), ran_subt (Empty_set U) R = R.
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. rewrite HR. reflexivity.
+Qed.
+
+
+Ltac rw_orb := rewrite orb_true_iff in *.
+
+
+(* Domain/range restriction/subtraction operations  after adding one element into the set argument *)
+Lemma dom_rest_Add: forall (S : FinSet T) (R : Relation T U) t, 
+  dom_rest (Add T t S) R = Union (T*U) (dom_rest (Singleton T t) R) (dom_rest S R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (equivT t0 t || mem T equivT t0 S) eqn:H1.
+    + rw_orb. destruct H1.
+      ++ rewrite H. simpl. destruct (mem T equivT t0 S) eqn:H2.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** rewrite HR. reflexivity.
+      ++ rewrite orb_false_r. rewrite H. destruct (equivT t0 t) eqn:H2.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** rewrite Union_Add_right. rewrite HR. reflexivity. auto.
+    + rewrite orb_false_r. destruct (equivT t0 t) eqn:H2.
+      ++ rewrite orb_false_iff in H1. destruct H1. discriminate.
+      ++ rewrite orb_false_iff in H1. destruct H1. rewrite H0. assumption.
+Qed.
+
+
+Lemma ran_rest_Add: forall (S : FinSet U) (R : Relation T U) u, 
+  ran_rest (Add U u S) R = Union (T*U) (ran_rest (Singleton U u) R) (ran_rest S R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (equivU u0 u || mem U equivU u0 S) eqn:H1.
+    + rw_orb. destruct H1.
+      ++ rewrite H. simpl. destruct (mem U equivU u0 S) eqn:H2.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** rewrite HR. reflexivity.
+      ++ rewrite orb_false_r. rewrite H. destruct (equivU u0 u) eqn:H2.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** rewrite Union_Add_right. rewrite HR. reflexivity. auto.
+    + rewrite orb_false_r. destruct (equivU u0 u) eqn:H2.
+      ++ rewrite orb_false_iff in H1. destruct H1. discriminate.
+      ++ rewrite orb_false_iff in H1. destruct H1. rewrite H0. assumption.
+Qed.
+
+
+Lemma dom_subt_Add: forall (S : FinSet T) (R : Relation T U) t, 
+  dom_subt (Add T t S) R = dom_subt (Singleton T t) (dom_subt S R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (equivT t0 t || mem T equivT t0 S) eqn:H1.
+    + rw_orb. destruct H1.
+      ++ destruct (mem T equivT t0 S) eqn:H2.
+        ** assumption. 
+        ** simpl. rewrite orb_false_r. destruct (equivT t0 t) eqn:H3. assumption. discriminate.
+      ++ rewrite H. assumption.
+    + rewrite orb_false_iff in H1. destruct H1. rewrite H0. simpl. rewrite orb_false_r. destruct (equivT t0 t) eqn:H2.
+      ++ discriminate.
+      ++ rewrite HR. reflexivity. 
+Qed.
+
+
+Lemma ran_subt_Add: forall (S : FinSet U) (R : Relation T U) u, 
+  ran_subt (Add U u S) R = ran_subt (Singleton U u) (ran_subt S R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (equivU u0 u || mem U equivU u0 S) eqn:H1.
+    + rw_orb. destruct H1.
+      ++ destruct (mem U equivU u0 S) eqn:H2.
+        ** assumption. 
+        ** simpl. rewrite orb_false_r. destruct (equivU u0 u) eqn:H3. assumption. discriminate.
+      ++ rewrite H. assumption.
+    + rewrite orb_false_iff in H1. destruct H1. rewrite H0. simpl. rewrite orb_false_r. destruct (equivU u0 u) eqn:H2.
+      ++ discriminate.
+      ++ rewrite HR. reflexivity. 
+Qed.
+
+
+(* membership after domain/range restriction/subtraction operations *)
+Lemma In_dom_rest: forall (S : FinSet T) (R : Relation T U) t u,
+  In (T*U) equivTU (t,u) (dom_rest S R) <-> In T equivT t S /\ In (T*U) equivTU (t,u) R. 
+Proof.
+  intros. split; unfold In; intros.
+  - induction R as [| r0 R0 HR].
+    + simpl in H. discriminate.
+    + simpl. simpl in H. rw_orb. destruct r0. destruct (mem T equivT t0 S) eqn:H1.
+      ++ simpl in H. rw_orb. destruct H.
+        ** rewrite H. split.  
+          *** unfold equivTU in H. unfold fst, snd in H. rewrite andb_true_iff in H. destruct H. 
+               rewrite equivT_extensionality in H. rewrite H. assumption.
+          *** left. reflexivity.
+        ** apply HR in H. destruct H. rewrite H. split. reflexivity. right. assumption.
+      ++ apply HR in H. destruct H. rewrite H. split. reflexivity. right. assumption.
+  - destruct H. induction R as [| r0 R0 HR].
+    + simpl in H0. discriminate.
+    + simpl. destruct r0. simpl in H0. rw_orb. destruct H0.
+      ++ destruct (mem T equivT t0 S) eqn:H1.
+        ** simpl. rw_orb. left. assumption.
+        ** unfold equivTU in H0. unfold fst, snd in H0. rewrite andb_true_iff in H0. destruct H0.
+            rewrite equivT_extensionality in H0. rewrite H0 in H. rewrite H in H1. discriminate.
+      ++ destruct (mem T equivT t0 S) eqn:H1. 
+        ** simpl. rw_orb. right. apply HR. assumption.
+        ** apply HR. assumption.
+Qed.
+
+
+Lemma In_ran_rest: forall (S : FinSet U) (R : Relation T U) t u,
+  In (T*U) equivTU (t,u) (ran_rest S R) <-> In U equivU u S /\ In (T*U) equivTU (t,u) R. 
+Proof.
+  intros. split; unfold In; intros.
+  - induction R as [| r0 R0 HR].
+    + simpl in H. discriminate.
+    + simpl. simpl in H. rw_orb. destruct r0. destruct (mem U equivU u0 S) eqn:H1.
+      ++ simpl in H. rw_orb. destruct H.
+        ** rewrite H. split.  
+          *** unfold equivTU in H. unfold fst, snd in H. rewrite andb_true_iff in H. destruct H. 
+               rewrite equivU_extensionality in H0. rewrite H0. assumption.
+          *** left. reflexivity.
+        ** apply HR in H. destruct H. rewrite H. split. reflexivity. right. assumption.
+      ++ apply HR in H. destruct H. rewrite H. split. reflexivity. right. assumption.
+  - destruct H. induction R as [| r0 R0 HR].
+    + simpl in H0. discriminate.
+    + simpl. destruct r0. simpl in H0. rw_orb. destruct H0.
+      ++ destruct (mem U equivU u0 S) eqn:H1.
+        ** simpl. rw_orb. left. assumption.
+        ** unfold equivTU in H0. unfold fst, snd in H0. rewrite andb_true_iff in H0. destruct H0.
+            rewrite equivU_extensionality in H2. rewrite H2 in H. rewrite H in H1. discriminate.
+      ++ destruct (mem U equivU u0 S) eqn:H1. 
+        ** simpl. rw_orb. right. apply HR. assumption.
+        ** apply HR. assumption.
+Qed.
+
+
+Lemma In_dom_subt: forall (S : FinSet T) (R : Relation T U) t u,
+  In (T*U) equivTU (t,u) (dom_subt S R) <-> ~ In T equivT t S /\ In (T*U) equivTU (t,u) R. 
+Proof.
+  intros. split; unfold In; intros.
+  - induction R as [| r0 R0 HR].
+    + simpl in H. discriminate.
+    + simpl. simpl in H. destruct r0. rw_orb. destruct (mem T equivT t0 S) eqn:H1.
+      ++ apply HR in H. destruct H. split. assumption. right. assumption.
+      ++ simpl in H. rw_orb. destruct H.
+        ** rewrite H. split.  
+          *** unfold equivTU in H. unfold fst, snd in H. rewrite andb_true_iff in H. destruct H. 
+               rewrite equivT_extensionality in H. rewrite H. rewrite H1. apply diff_false_true.
+          *** left. reflexivity.
+        ** apply HR in H. destruct H. split. assumption. right. assumption.
+  - destruct H. induction R as [| r0 R0 HR].
+    + simpl in H0. discriminate.
+    + simpl. destruct r0. simpl in H0. rw_orb. destruct H0.
+      ++ destruct (mem T equivT t0 S) eqn:H1.
+        ** unfold equivTU in H0. unfold fst, snd in H0. rewrite andb_true_iff in H0. destruct H0.
+            rewrite equivT_extensionality in H0. rewrite H0 in H. rewrite H1 in H. unfold not in H.
+            exfalso. apply H. reflexivity.
+        ** simpl. rw_orb. left. assumption.
+      ++ destruct (mem T equivT t0 S) eqn:H1. 
+        ** apply HR. assumption.
+        ** simpl. rw_orb. right. apply HR. assumption.
+Qed.
+
+
+Lemma In_ran_subt: forall (S : FinSet U) (R : Relation T U) t u,
+  In (T*U) equivTU (t,u) (ran_subt S R) <-> ~ In U equivU u S /\ In (T*U) equivTU (t,u) R. 
+Proof.
+  intros. split; unfold In; intros.
+  - induction R as [| r0 R0 HR].
+    + simpl in H. discriminate.
+    + simpl. simpl in H. destruct r0. rw_orb. destruct (mem U equivU u0 S) eqn:H1.
+      ++ apply HR in H. destruct H. split. assumption. right. assumption.
+      ++ simpl in H. rw_orb. destruct H.
+        ** rewrite H. split.  
+          *** unfold equivTU in H. unfold fst, snd in H. rewrite andb_true_iff in H. destruct H. 
+               rewrite equivU_extensionality in H0. rewrite H0. rewrite H1. apply diff_false_true.
+          *** left. reflexivity.
+        ** apply HR in H. destruct H. split. assumption. right. assumption.
+  - destruct H. induction R as [| r0 R0 HR].
+    + simpl in H0. discriminate.
+    + simpl. destruct r0. simpl in H0. rw_orb. destruct H0.
+      ++ destruct (mem U equivU u0 S) eqn:H1.
+        ** unfold equivTU in H0. unfold fst, snd in H0. rewrite andb_true_iff in H0. destruct H0.
+            rewrite equivU_extensionality in H2. rewrite <- H2 in H1. rewrite H1 in H. unfold not in H.
+            exfalso. apply H. reflexivity.
+        ** simpl. rw_orb. left. assumption.
+      ++ destruct (mem U equivU u0 S) eqn:H1. 
+        ** apply HR. assumption.
+        ** simpl. rw_orb. right. apply HR. assumption.
+Qed.
+
+
+(* Domain/range restriction/subtraction operations  with with union of sets *)
+Lemma dom_rest_Union: forall (S : FinSet T) S' (R : Relation T U), 
+  dom_rest (Union T S S') R = Union (T*U) (dom_rest S R) (dom_rest S' R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (mem T equivT t (Union T S S')) eqn:H1.
+    + destruct (mem T equivT t S) eqn:H2.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** simpl. rewrite HR. reflexivity.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** rewrite Union_Add_right. rewrite HR. reflexivity. auto.
+        ** pose (H4 := In_Union T equivT t S S'). unfold In in H4. rewrite H4 in H1. destruct H1. 
+            rewrite H in H2. discriminate. rewrite H in H3. discriminate.
+    + destruct (mem T equivT t S) eqn:H2.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** pose (H4 := In_Union T equivT t S S'). 
+            unfold In in H4. assert (mem T equivT t (Union T S S') = true) as H5. rewrite H4. left. assumption.
+            rewrite H5 in H1. discriminate.
+        ** pose (H4 := In_Union T equivT t S S'). 
+            unfold In in H4. assert (mem T equivT t (Union T S S') = true) as H5. rewrite H4. left. assumption. 
+            rewrite H5 in H1. discriminate.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** pose (H4 := In_Union T equivT t S S'). 
+            unfold In in H4. assert (mem T equivT t (Union T S S') = true) as H5. rewrite H4. right. assumption. 
+            rewrite H5 in H1. discriminate.
+        ** assumption.
+Qed.
+
+
+Lemma ran_rest_Union: forall (S : FinSet U) S' (R : Relation T U), 
+  ran_rest (Union U S S') R = Union (T*U) (ran_rest S R) (ran_rest S' R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (mem U equivU u (Union U S S')) eqn:H1.
+    + destruct (mem U equivU u S) eqn:H2.
+      ++ destruct (mem U equivU u S') eqn:H3.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** simpl. rewrite HR. reflexivity.
+      ++ destruct (mem U equivU u S') eqn:H3.
+        ** rewrite Union_Add_right. rewrite HR. reflexivity. auto.
+        ** pose (H4 := In_Union U equivU u S S'). unfold In in H4. rewrite H4 in H1. destruct H1. 
+            rewrite H in H2. discriminate. rewrite H in H3. discriminate.
+    + destruct (mem U equivU u S) eqn:H2.
+      ++ destruct (mem U equivU u S') eqn:H3.
+        ** pose (H4 := In_Union U equivU u S S'). 
+            unfold In in H4. assert (mem U equivU u (Union U S S') = true) as H5. rewrite H4. left. assumption.
+            rewrite H5 in H1. discriminate.
+        ** pose (H4 := In_Union U equivU u S S'). 
+            unfold In in H4. assert (mem U equivU u (Union U S S') = true) as H5. rewrite H4. left. assumption. 
+            rewrite H5 in H1. discriminate.
+      ++ destruct (mem U equivU u S') eqn:H3.
+        ** pose (H4 := In_Union U equivU u S S'). 
+            unfold In in H4. assert (mem U equivU u (Union U S S') = true) as H5. rewrite H4. right. assumption. 
+            rewrite H5 in H1. discriminate.
+        ** assumption.
+Qed.
+
+
+Lemma dom_subt_Union: forall (S : FinSet T) S' (R : Relation T U), 
+  dom_subt (Union T S S') R = dom_subt S (dom_subt S' R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (mem T equivT t (Union T S S')) eqn:H1.
+    + destruct (mem T equivT t S') eqn:H2.
+      ++ assumption.
+      ++ simpl. destruct (mem T equivT t S) eqn:H3.
+        ** assumption. 
+        ** pose (H4 := In_Union T equivT t S S'). unfold In in H4. rewrite H4 in H1. destruct H1. 
+            rewrite H in H3. discriminate. rewrite H in H2. discriminate.
+    + destruct (mem T equivT t S') eqn:H2.
+      ++ pose (H4 := In_Union T equivT t S S'). unfold In in H4. 
+           assert (mem T equivT t (Union T S S') = true) as H5. rewrite H4. right. assumption. rewrite H5 in H1.
+           discriminate.
+      ++ simpl. destruct (mem T equivT t S) eqn:H3.
+        ** pose (H4 := In_Union T equivT t S S'). unfold In in H4. 
+           assert (mem T equivT t (Union T S S') = true) as H5. rewrite H4. left. assumption. rewrite H5 in H1.
+           discriminate.
+        ** rewrite HR. reflexivity.
+Qed.
+
+
+Lemma ran_subt_Union: forall (S : FinSet U) S' (R : Relation T U), 
+  ran_subt (Union U S S') R = ran_subt S (ran_subt S' R).
+Proof.
+  intros. induction R as [| r0 R0 HR].
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (mem U equivU u (Union U S S')) eqn:H1.
+    + destruct (mem U equivU u S') eqn:H2.
+      ++ assumption.
+      ++ simpl. destruct (mem U equivU u S) eqn:H3.
+        ** assumption. 
+        ** pose (H4 := In_Union U equivU u S S'). unfold In in H4. rewrite H4 in H1. destruct H1. 
+            rewrite H in H3. discriminate. rewrite H in H2. discriminate.
+    + destruct (mem U equivU u S') eqn:H2.
+      ++ pose (H4 := In_Union U equivU u S S'). unfold In in H4. 
+           assert (mem U equivU u (Union U S S') = true) as H5. rewrite H4. right. assumption. rewrite H5 in H1.
+           discriminate.
+      ++ simpl. destruct (mem U equivU u S) eqn:H3.
+        ** pose (H4 := In_Union U equivU u S S'). unfold In in H4. 
+           assert (mem U equivU u (Union U S S') = true) as H5. rewrite H4. left. assumption. rewrite H5 in H1.
+           discriminate.
+        ** rewrite HR. reflexivity.
+Qed.
+
+
+(* Domain/range restriction/subtraction operations  with union of relations *)
+Lemma dom_rest_Union_right: forall (S : FinSet T) (R : Relation T U) R', 
+  dom_rest S (Union (T*U) R R') = Union (T*U) (dom_rest S R) (dom_rest S R').
+Proof.
+  intros. rewrite <- (set_extensionality (T*U) equivTU). unfold Same_set, Subset. split.
+  - intros. pose (H1 := In_dom_rest). unfold In in H1. destruct x in *. rewrite H1 in H. destruct H.
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H0. destruct H0.
+    + left. rewrite H1. split. assumption. assumption.
+    + right. rewrite H1. split. assumption. assumption.
+  - intros. pose (H1 := In_dom_rest). unfold In in H1. destruct x in *. rewrite H1. 
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H. destruct H.
+    + rewrite H1 in H. destruct H. split. assumption. left. assumption.
+    + rewrite H1 in H. destruct H. split. assumption. right. assumption.
+Qed.
+
+
+Lemma ran_rest_Union_right: forall (S : FinSet U) (R : Relation T U) R', 
+  ran_rest S (Union (T*U) R R') = Union (T*U) (ran_rest S R) (ran_rest S R').
+Proof.
+  intros. rewrite <- (set_extensionality (T*U) equivTU). unfold Same_set, Subset. split.
+  - intros. pose (H1 := In_ran_rest). unfold In in H1. destruct x in *. rewrite H1 in H. destruct H.
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H0. destruct H0.
+    + left. rewrite H1. split. assumption. assumption.
+    + right. rewrite H1. split. assumption. assumption.
+  - intros. pose (H1 := In_ran_rest). unfold In in H1. destruct x in *. rewrite H1. 
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H. destruct H.
+    + rewrite H1 in H. destruct H. split. assumption. left. assumption.
+    + rewrite H1 in H. destruct H. split. assumption. right. assumption.
+Qed.
+
+
+Lemma dom_subt_Union_right: forall (S : FinSet T) (R : Relation T U) R', 
+  dom_subt S (Union (T*U) R R') = Union (T*U) (dom_subt S R) (dom_subt S R').
+Proof.
+  intros. rewrite <- (set_extensionality (T*U) equivTU). unfold Same_set, Subset. split.
+  - intros. pose (H1 := In_dom_subt). unfold In in H1. destruct x in *. rewrite H1 in H. destruct H.
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H0. destruct H0.
+    + left. rewrite H1. split. assumption. assumption.
+    + right. rewrite H1. split. assumption. assumption.
+  - intros. pose (H1 := In_dom_subt). unfold In in H1. destruct x in *. rewrite H1. 
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H. destruct H.
+    + rewrite H1 in H. destruct H. split. assumption. left. assumption.
+    + rewrite H1 in H. destruct H. split. assumption. right. assumption.
+Qed.
+
+
+Lemma ran_subt_Union_right: forall (S : FinSet U) (R : Relation T U) R', 
+  ran_subt S (Union (T*U) R R') = Union (T*U) (ran_subt S R) (ran_subt S R').
+Proof.
+  intros. rewrite <- (set_extensionality (T*U) equivTU). unfold Same_set, Subset. split.
+  - intros. pose (H1 := In_ran_subt). unfold In in H1. destruct x in *. rewrite H1 in H. destruct H.
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H0. destruct H0.
+    + left. rewrite H1. split. assumption. assumption.
+    + right. rewrite H1. split. assumption. assumption.
+  - intros. pose (H1 := In_ran_subt). unfold In in H1. destruct x in *. rewrite H1. 
+    pose (H2 := In_Union). unfold In in H2. rewrite H2. rewrite H2 in H. destruct H.
+    + rewrite H1 in H. destruct H. split. assumption. left. assumption.
+    + rewrite H1 in H. destruct H. split. assumption. right. assumption.
+Qed.
+
+
+(* Relational  image  operation  -- with empty set *)
+Lemma rel_image_Empty: forall (R : Relation T U), rel_image (Empty_set T) R = (Empty_set U).
+Proof.
+  intros. induction R as [| r0 R0 HR]; unfold rel_image in *.
+  - simpl. reflexivity.
+  - simpl. destruct r0. rewrite HR. reflexivity.
+Qed.
+
+
+(* Relational  image  operation  -- with added element into a set *)
+Lemma rel_image_Add: forall (S : FinSet T) (R : Relation T U) t, 
+  rel_image (Add _ t S) R = Union U (rel_image (Singleton _ t) R) (rel_image S R).
+Proof.
+  intros. induction R as [| r0 R0 HR]; unfold rel_image, Singleton in *.
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (equivT t0 t || mem T equivT t0 S) eqn:H1.
+    + rewrite orb_false_r in *. destruct (equivT t0 t) eqn:H2.
+      ++ destruct (mem T equivT t0 S) eqn:H3.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** simpl. rewrite HR. reflexivity.
+      ++ destruct (mem T equivT t0 S) eqn:H3.
+        ** simpl. rewrite Union_Add_right. rewrite HR. reflexivity. auto.
+        ** rewrite orb_false_r in *. discriminate.
+    + rewrite orb_false_r in *. destruct (equivT t0 t) eqn:H2.
+      ++ rewrite orb_true_l in H1. discriminate.
+      ++ destruct (mem T equivT t0 S) eqn:H3.
+        ** rewrite orb_true_r in H1. discriminate.
+        ** simpl. rewrite dom_rest_Add. rewrite dom_rest_Add. rewrite dom_rest_Empty.
+            rewrite Union_Empty_right. rewrite <- dom_rest_Add. assumption.
+Qed.
+
+
+(* Relational  image  operation  -- with union of sets *)
+Lemma rel_image_Union: forall (S : FinSet T) S' (R : Relation T U), 
+  rel_image (Union _ S S') R = Union U (rel_image S R) (rel_image S' R).
+Proof.
+  intros. induction R as [| r0 R0 HR]; unfold rel_image in *.
+  - simpl. reflexivity.
+  - simpl. destruct r0. destruct (mem T equivT t (Union T S S')) eqn:H1.
+    + destruct (mem T equivT t S) eqn:H2.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** simpl. rewrite Union_Add_right. rewrite Add_same. rewrite HR. reflexivity. auto. auto.
+        ** simpl. rewrite HR. reflexivity.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** simpl. rewrite Union_Add_right. rewrite HR. reflexivity. auto.
+        ** pose (H4 := In_Union T equivT t S S'). unfold In in H4. rewrite H4 in H1. 
+            destruct H1. rewrite H in H2. discriminate. rewrite H in H3. discriminate. 
+    + destruct (mem T equivT t S) eqn:H2.
+      ++ pose (H4 := In_Union T equivT t S S'). unfold In in H4. rewrite H2 in H4. 
+           assert (true = true \/ mem T equivT t S' = true) as H5. left. reflexivity. rewrite <- H4 in H5.
+           rewrite H5 in H1. discriminate.
+      ++ destruct (mem T equivT t S') eqn:H3.
+        ** pose (H4 := In_Union T equivT t S S'). unfold In in H4. rewrite H2 in H4. 
+           assert (false = true \/ mem T equivT t S' = true) as H5. right. assumption. rewrite <- H4 in H5.
+           rewrite H5 in H1. discriminate.
+        ** assumption. 
+Qed.
+
+
+(* Relational overriding  operation  -- with empty set *)
+Lemma over_Empty_right: forall (R : Relation T U), over R (Empty_set (T*U)) = R.
+Proof.
+  intros. unfold over. simpl. rewrite dom_subt_Empty. reflexivity.
+Qed.
+
+
+(* Relational overriding  operation  -- with empty relation *)
+Lemma over_Empty_left: forall (Q : Relation T U), over (Empty_set (T*U)) Q = Q.
+Proof.
+  intros. unfold over. simpl. rewrite Union_Empty_right. reflexivity.
+Qed.
+
+
 (*
-Definition comp (R : Relation T W) (Q : Relation W U) : Relation T U := 
-  fun x => exists y, In _ (fst x,y) R /\ In _ (y,snd x) Q.
+Lemma over_Add_right: forall (R : Relation T U) Q (q : T*U), 
+  over R (Add _ q Q) = over (over R Q) (Singleton (T * U) q).
+Proof.
+  intros. unfold over. simpl. destruct q.  rewrite dom_subt_Add. rewrite dom_subt_Add. rewrite dom_subt_Empty.
+  rewrite dom_subt_Union_right.
 *)
 
 
-End FinRelations
+End FinRelations.
